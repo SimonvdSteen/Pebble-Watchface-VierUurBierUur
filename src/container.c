@@ -13,11 +13,12 @@ Layer *line_layer;
 const char *time_format_12 = "%02I:%M";
 const char *time_format_24 = "%02H:%M";
 const char beer_text[] = "Tijd voor bier!";
-const char beer_text_remaining[] = "Bijna biertijd...";
+const char beer_text_remaining[] = "wachten op bier!";
 const char drink_up[] = "4 uur, Bier uur!";
 const int beer_oclock = 16;
 static char time_text[] = "00:00";
 static char hour_remaining_text[] = "00";
+static char hour_remaining_text_show[] = "00 uur";
 
 void line_layer_update_callback(Layer *layer, GContext* ctx) {
 	graphics_context_set_fill_color(ctx, GColorWhite);
@@ -45,8 +46,13 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 			text_layer_set_text(text_hours_layer, beer_text_remaining);
 			text_layer_set_font(text_hours_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
 		
-			snprintf(hour_remaining_text, sizeof(hour_remaining_text), "%d", hour_current_remaining);
-			text_layer_set_text(text_countdown_layer, hour_remaining_text);
+			if(hour_current_remaining > 1){				
+				snprintf(hour_remaining_text_show, 7, "%d uur", hour_current_remaining);
+			}else{
+				int  minute_remaining =  60-minute_current;
+				snprintf(hour_remaining_text_show, 7, "%d min", minute_remaining);
+			}
+			text_layer_set_text(text_countdown_layer, hour_remaining_text_show);
 		}else{
 			text_layer_set_text(text_countdown_layer, "Zzzzzz!");
 		}
