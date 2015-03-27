@@ -13,7 +13,7 @@ Layer *line_layer;
 const char *time_format_12 = "%02I:%M";
 const char *time_format_24 = "%02H:%M";
 const char beer_text[] = "Tijd voor bier!";
-const char beer_text_remaining[] = "Bijna tijd voor bier";
+const char beer_text_remaining[] = "Bijna biertijd...";
 const char drink_up[] = "4 uur, Bier uur!";
 const int beer_oclock = 16;
 static char time_text[] = "00:00";
@@ -36,15 +36,16 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 	text_layer_set_text(text_beer_layer, beer_text);
 	
 	int hour_remaining = tick_time->tm_hour;
+	int minute_current = tick_time->tm_min;
 	int hour_stop = 4;
 	int hour_wake = 7;
 	if (hour_remaining >= hour_stop && hour_remaining < beer_oclock) {
-		hour_remaining = beer_oclock - hour_remaining;
-		if(hour_remaining >= hour_stop && hour_remaining < hour_wake){
+		int hour_current_remaining = beer_oclock - hour_remaining;
+		if(hour_remaining >= hour_stop && hour_current_remaining < hour_wake){
 			text_layer_set_text(text_hours_layer, beer_text_remaining);
 			text_layer_set_font(text_hours_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
 		
-			snprintf(hour_remaining_text, sizeof(hour_remaining_text), "%d", hour_remaining);
+			snprintf(hour_remaining_text, sizeof(hour_remaining_text), "%d", hour_current_remaining);
 			text_layer_set_text(text_countdown_layer, hour_remaining_text);
 		}else{
 			text_layer_set_text(text_countdown_layer, "Zzzzzz!");
@@ -53,6 +54,11 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 	} else {
 		text_layer_set_text(text_drinkup_layer, drink_up);
 		layer_set_hidden((Layer *)text_hours_layer, false);
+	}
+	
+	//Vibrate on Beer 'o Clock
+	if(hour_remaining == beer_oclock && minute_current == 00){
+		vibes_long_pulse();
 	}
 }
 
