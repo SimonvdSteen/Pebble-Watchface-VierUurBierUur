@@ -2,6 +2,7 @@
 #include "container.h"
 	
 Window *window;
+TextLayer *text_charge_layer;
 TextLayer *text_date_layer;
 TextLayer *text_countdown_layer;
 TextLayer *text_time_layer;
@@ -12,13 +13,24 @@ TextLayer *text_drinkup_layer;
 Layer *line_layer;
 const char *time_format_12 = "%02I:%M";
 const char *time_format_24 = "%02H:%M";
-const char beer_text[] = "Tijd voor bier!";
+static char beer_text[] = "Tijd voor bier";
 const char beer_text_remaining[] = "wachten op bier!";
 const char drink_up[] = "4 uur, Bier uur!";
 const int beer_oclock = 16;
 static char time_text[] = "00:00";
 static char hour_remaining_text[] = "00";
 static char hour_remaining_text_show[] = "00 uur";
+static char s_battery_buffer[] = "000%";
+
+//Check Pebble Battery
+static void battery_handler(BatteryChargeState charge_state) {
+	if (charge_state.is_charging) {
+		snprintf(s_battery_buffer, sizeof(s_battery_buffer), "~");
+	} else {
+		snprintf(s_battery_buffer, sizeof(s_battery_buffer), "%d%%", charge_state.charge_percent);
+	}
+	text_layer_set_text(text_charge_layer, s_battery_buffer);
+}
 
 void line_layer_update_callback(Layer *layer, GContext* ctx) {
 	graphics_context_set_fill_color(ctx, GColorWhite);
@@ -34,13 +46,14 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 	strftime(time_text, sizeof(time_text), clock_is_24h_style() ?
 	time_format_24 : time_format_12, tick_time);
 	text_layer_set_text(text_time_layer, time_text);
-	text_layer_set_text(text_beer_layer, beer_text);
 	
 	int hour_remaining = tick_time->tm_hour;
 	int minute_current = tick_time->tm_min;
 	int hour_stop = 4;
 	int hour_wake = 7;
 	if (hour_remaining >= hour_stop && hour_remaining < beer_oclock) {
+		//Add Questionmark
+		snprintf(beer_text, sizeof(beer_text)+1, "%s?", beer_text);
 		int hour_current_remaining = beer_oclock - hour_remaining;
 		if(hour_remaining >= hour_stop && hour_current_remaining < hour_wake){
 			text_layer_set_text(text_hours_layer, beer_text_remaining);
@@ -58,21 +71,27 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 		}
 		layer_set_hidden((Layer *)text_drinkup_layer, true);
 	} else {
+		//Add Exclamationmark
+		snprintf(beer_text, sizeof(beer_text)+1, "%s!", beer_text);
 		text_layer_set_text(text_drinkup_layer, drink_up);
-		layer_set_hidden((Layer *)text_hours_layer, false);
+		layer_set_hidden((Layer *)text_hours_layer, true);
+		layer_set_hidden((Layer *)text_countdown_layer, true);
+		layer_set_hidden((Layer *)text_drinkup_layer, false);
 	}
 	
 	//Vibrate on Beer 'o Clock
 	if(hour_remaining == beer_oclock && minute_current == 00){
 		vibes_long_pulse();
 	}
+	
+	text_layer_set_text(text_beer_layer, beer_text);
 }
 
 void handle_deinit(void) {
 	tick_timer_service_unsubscribe();
 }
 
-void handle_init(void) {
+void handle_init(void) {	
 	window = window_create();
 	window_stack_push(window, true /* Animated */);
 	window_set_background_color(window, GColorBlack);
@@ -114,6 +133,16 @@ void handle_init(void) {
 	layer_add_child(window_layer, text_layer_get_layer(text_hours_layer));
 	tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
 	handle_minute_tick(NULL, MINUTE_UNIT);
+	
+	text_charge_layer = text_layer_create(GRect(99, 0, 40, 20));
+	text_layer_set_text_alignment(text_charge_layer, GTextAlignmentRight);
+	text_layer_set_text_color(text_charge_layer, GColorWhite);
+	text_layer_set_background_color(text_charge_layer, GColorClear);
+	text_layer_set_font(text_charge_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+	layer_add_child(window_layer, text_layer_get_layer(text_charge_layer));
+	text_layer_set_text(text_charge_layer, s_battery_buffer);
+	battery_state_service_subscribe(battery_handler);
+	battery_handler(battery_state_service_peek());
 }
 
 int main(void) {
