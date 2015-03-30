@@ -55,7 +55,7 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 		//Add Questionmark
 		snprintf(beer_text, sizeof(beer_text)+1, "%s?", beer_text);
 		int hour_current_remaining = beer_oclock - hour_remaining;
-		if(hour_remaining >= hour_stop && hour_current_remaining < hour_wake){
+		if(hour_remaining >= hour_stop && hour_remaining > hour_wake){
 			text_layer_set_text(text_hours_layer, beer_text_remaining);
 			text_layer_set_font(text_hours_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
 		
@@ -69,6 +69,7 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 		}else{
 			text_layer_set_text(text_countdown_layer, "Zzzzzz!");
 		}
+		layer_set_hidden((Layer *)text_countdown_layer, false);
 		layer_set_hidden((Layer *)text_drinkup_layer, true);
 	} else {
 		//Add Exclamationmark
