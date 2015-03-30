@@ -3,6 +3,7 @@
 	
 Window *window;
 TextLayer *text_charge_layer;
+TextLayer *text_week_layer;
 TextLayer *text_date_layer;
 TextLayer *text_countdown_layer;
 TextLayer *text_time_layer;
@@ -21,6 +22,7 @@ static char time_text[] = "00:00";
 static char hour_remaining_text[] = "00";
 static char hour_remaining_text_show[] = "00 uur";
 static char s_battery_buffer[] = "000%";
+static char s_week_number[] = "WK00";
 
 //Check Pebble Battery
 static void battery_handler(BatteryChargeState charge_state) {
@@ -43,9 +45,10 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 		tick_time = localtime(&now);
 	}
 	
-	strftime(time_text, sizeof(time_text), clock_is_24h_style() ?
-	time_format_24 : time_format_12, tick_time);
+	strftime(time_text, sizeof(time_text), clock_is_24h_style() ? time_format_24 : time_format_12, tick_time);
 	text_layer_set_text(text_time_layer, time_text);
+	
+	strftime(s_week_number, sizeof(s_week_number), "WK%W", tick_time);
 	
 	int hour_remaining = tick_time->tm_hour;
 	int minute_current = tick_time->tm_min;
@@ -97,7 +100,7 @@ void handle_init(void) {
 	window_stack_push(window, true /* Animated */);
 	window_set_background_color(window, GColorBlack);
 	Layer *window_layer = window_get_root_layer(window);
-	text_time_layer = text_layer_create(GRect(0, 15, 144, 55));
+	text_time_layer = text_layer_create(GRect(0, 18, 144, 144));
 	text_layer_set_text_alignment(text_time_layer, GTextAlignmentCenter);
 	text_layer_set_text_color(text_time_layer, GColorWhite);
 	text_layer_set_background_color(text_time_layer, GColorClear);
@@ -135,6 +138,16 @@ void handle_init(void) {
 	tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
 	handle_minute_tick(NULL, MINUTE_UNIT);
 	
+	//Handle Week Number
+	text_week_layer = text_layer_create(GRect(5, 0, 40, 20));
+	text_layer_set_text_alignment(text_week_layer, GTextAlignmentLeft);
+	text_layer_set_text_color(text_week_layer, GColorWhite);
+	text_layer_set_background_color(text_week_layer, GColorClear);
+	text_layer_set_font(text_week_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+	layer_add_child(window_layer, text_layer_get_layer(text_week_layer));
+	text_layer_set_text(text_week_layer, s_week_number);
+	
+	//Handle Battery
 	text_charge_layer = text_layer_create(GRect(99, 0, 40, 20));
 	text_layer_set_text_alignment(text_charge_layer, GTextAlignmentRight);
 	text_layer_set_text_color(text_charge_layer, GColorWhite);
