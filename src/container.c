@@ -48,7 +48,7 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 	strftime(time_text, sizeof(time_text), clock_is_24h_style() ? time_format_24 : time_format_12, tick_time);
 	text_layer_set_text(text_time_layer, time_text);
 	
-	strftime(s_week_number, sizeof(s_week_number), "WK%W", tick_time);
+	strftime(s_week_number, sizeof(s_week_number), "WK%V", tick_time);
 	
 	int hour_remaining = tick_time->tm_hour;
 	int minute_current = tick_time->tm_min;
