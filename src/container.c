@@ -2,6 +2,8 @@
 #include "container.h"
 	
 Window *window;
+static GBitmap *image_icon_pebble;
+static BitmapLayer *image_icon_pebble_layer;
 TextLayer *text_charge_layer;
 TextLayer *text_week_layer;
 TextLayer *text_date_layer;
@@ -14,7 +16,7 @@ TextLayer *text_drinkup_layer;
 Layer *line_layer;
 const char *time_format_12 = "%02I:%M";
 const char *time_format_24 = "%02H:%M";
-static char beer_text[] = "Tijd voor bier";
+static char beer_text[] = "Tijd voor bier?";
 const char beer_text_remaining[] = "wachten op bier!";
 const char drink_up[] = "4 uur, Bier uur!";
 const int beer_oclock = 16;
@@ -56,7 +58,7 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 	int hour_wake = 7;
 	if (hour_remaining >= hour_stop && hour_remaining < beer_oclock) {
 		//Add Questionmark
-		snprintf(beer_text, sizeof(beer_text)+1, "%s?", beer_text);
+		snprintf(beer_text, sizeof(beer_text), "%s?", beer_text);
 		int hour_current_remaining = beer_oclock - hour_remaining;
 		if(hour_remaining >= hour_stop && hour_remaining > hour_wake){
 			text_layer_set_text(text_hours_layer, beer_text_remaining);
@@ -93,6 +95,9 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 
 void handle_deinit(void) {
 	tick_timer_service_unsubscribe();
+	battery_state_service_unsubscribe();
+	gbitmap_destroy(image_icon_pebble);
+	bitmap_layer_destroy(image_icon_pebble_layer);
 }
 
 void handle_init(void) {	
@@ -143,16 +148,22 @@ void handle_init(void) {
 	text_layer_set_text_alignment(text_week_layer, GTextAlignmentLeft);
 	text_layer_set_text_color(text_week_layer, GColorWhite);
 	text_layer_set_background_color(text_week_layer, GColorClear);
-	text_layer_set_font(text_week_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+	text_layer_set_font(text_week_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
 	layer_add_child(window_layer, text_layer_get_layer(text_week_layer));
 	text_layer_set_text(text_week_layer, s_week_number);
+	
+	//Add Icon next to Battery
+	image_icon_pebble = gbitmap_create_with_resource(RESOURCE_ID_ICON_PEBBLE);
+	image_icon_pebble_layer = bitmap_layer_create(GRect(94, 1, 14, 17));
+	bitmap_layer_set_bitmap(image_icon_pebble_layer, image_icon_pebble);
+	layer_add_child(window_layer, bitmap_layer_get_layer(image_icon_pebble_layer));
 	
 	//Handle Battery
 	text_charge_layer = text_layer_create(GRect(99, 0, 40, 20));
 	text_layer_set_text_alignment(text_charge_layer, GTextAlignmentRight);
 	text_layer_set_text_color(text_charge_layer, GColorWhite);
 	text_layer_set_background_color(text_charge_layer, GColorClear);
-	text_layer_set_font(text_charge_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+	text_layer_set_font(text_charge_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
 	layer_add_child(window_layer, text_layer_get_layer(text_charge_layer));
 	text_layer_set_text(text_charge_layer, s_battery_buffer);
 	battery_state_service_subscribe(battery_handler);

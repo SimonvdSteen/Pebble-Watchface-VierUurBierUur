@@ -7,7 +7,13 @@
     "longName": "Vier uur, Bier uur",
     "projectType": "native",
     "resources": {
-        "media": []
+        "media": [
+            {
+                "file": "images/icon-pebble.png",
+                "name": "ICON_PEBBLE",
+                "type": "png"
+            }
+        ]
     },
     "sdkVersion": "2",
     "shortName": "Vier uur, Bier uur",
