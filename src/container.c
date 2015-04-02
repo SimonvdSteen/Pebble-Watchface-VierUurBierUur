@@ -16,6 +16,7 @@ TextLayer *text_drinkup_layer;
 Layer *line_layer;
 const char *time_format_12 = "%02I:%M";
 const char *time_format_24 = "%02H:%M";
+const char beer_text_base[] = "Tijd voor bier";
 static char beer_text[] = "Tijd voor bier?";
 const char beer_text_remaining[] = "wachten op bier!";
 const char drink_up[] = "4 uur, Bier uur!";
@@ -58,7 +59,7 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 	int hour_wake = 7;
 	if (hour_remaining >= hour_stop && hour_remaining < beer_oclock) {
 		//Add Questionmark
-		snprintf(beer_text, sizeof(beer_text), "%s?", beer_text);
+		snprintf(beer_text, sizeof(beer_text), "%s?", beer_text_base);
 		int hour_current_remaining = beer_oclock - hour_remaining;
 		if(hour_remaining >= hour_stop && hour_remaining > hour_wake){
 			text_layer_set_text(text_hours_layer, beer_text_remaining);
@@ -78,7 +79,7 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 		layer_set_hidden((Layer *)text_drinkup_layer, true);
 	} else {
 		//Add Exclamationmark
-		snprintf(beer_text, sizeof(beer_text)+1, "%s!", beer_text);
+		snprintf(beer_text, sizeof(beer_text), "%s!", beer_text_base);
 		text_layer_set_text(text_drinkup_layer, drink_up);
 		layer_set_hidden((Layer *)text_hours_layer, true);
 		layer_set_hidden((Layer *)text_countdown_layer, true);
